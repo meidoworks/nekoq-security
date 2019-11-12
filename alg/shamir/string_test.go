@@ -28,3 +28,28 @@ func TestCombineShamirString(t *testing.T) {
 
 	t.Log(key)
 }
+
+func BenchmarkCombineShamirString(b *testing.B) {
+	sl, err := SplitByShamirString([]byte{1, 2, 3, 4, 5, 6}, 3, 5)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := CombineShamirString(sl)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkSplitByShamirString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := SplitByShamirString([]byte{1, 2, 3, 4, 5, 6}, 3, 5)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

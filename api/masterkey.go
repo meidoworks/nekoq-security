@@ -6,7 +6,13 @@ type MasterKeyProviderInfo struct {
 }
 
 type MasterKeyProvider interface {
-	GetProviderInfo() MasterKeyProvider
+	GetProviderInfo() MasterKeyProviderInfo
+	GetTestText() string
+
 	Encrypt(dataKey []byte) ([]byte, error)
 	Decrypt(encryptedText []byte) ([]byte, error)
+}
+
+type MasterKeyProviderInitializer interface {
+	GenerateInitializingKey(p interface{}) (interface{}, error)
 }
