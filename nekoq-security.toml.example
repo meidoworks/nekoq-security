@@ -1,0 +1,11 @@
+[global]
+debug = true
+
+[gin]
+release_mode = false
+html_glob_paths = []
+listen = ":6002"
+
+[nekoq-security]
+masterkey.type = "shamir"
+storage.path = "nekoq-security.db"

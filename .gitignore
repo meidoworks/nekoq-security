@@ -26,3 +26,5 @@ _testmain.go
 # idea
 /*.iml
 /.idea
+/nekoq-security.toml
+/nekoq-security.db

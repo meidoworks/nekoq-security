@@ -1,1 +1,1 @@
-package main // import "goimport.moetang.info/nekoq-security"
+package main
