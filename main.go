@@ -31,7 +31,7 @@ func init() {
 		os.Exit(0)
 	}
 
-	if premaster != nil {
+	if premaster != nil && len(*premaster) > 0 {
 		preKeyShards = strings.Split(*premaster, ",")
 	}
 }
@@ -41,6 +41,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	config.InitWebScaffold(webscaf)
 	c := new(config.NekoQSecurityConfig)
 	err = scaffold.ReadCustomConfig("nekoq-security.toml", c)
 	if err != nil {

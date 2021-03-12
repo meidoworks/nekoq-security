@@ -11,6 +11,8 @@ import (
 	"goimport.moetang.info/nekoq-security/alg/aesutils"
 	"goimport.moetang.info/nekoq-security/alg/shamir"
 
+	scaffold "github.com/moetang/webapp-scaffold"
+
 	"go.etcd.io/bbolt"
 )
 
@@ -18,6 +20,23 @@ const (
 	MaxShares = 5
 	MinShares = 3
 )
+
+var moduleNamespace = make(map[string]struct {
+	Namespace string
+	Module    Module
+})
+
+func RegisterModuleNamespace(module, namespace string, m Module) {
+	moduleNamespace[module] = struct {
+		Namespace string
+		Module    Module
+	}{Namespace: namespace, Module: m}
+}
+
+type Module interface {
+	SetupConfig(container *NekoQSecurityContainer) error
+	InitWebScaffold(scaffold *scaffold.WebappScaffold) error
+}
 
 type NekoQSecurityConfig struct {
 	NekoQSecurity struct {
@@ -127,9 +146,6 @@ func (c *NekoQSecurityConfig) FeedShamirKey(key string) bool {
 			if !bytes.HasSuffix(dec, []byte("_nekoq-security")) {
 				return errors.New("masterkey cannot decrypt init value")
 			}
-			// decrypt success and init masterkey
-			c.container.MasterUnlock = true
-			c.container.MasterKey = m
 		}
 		return nil
 	})
@@ -137,7 +153,41 @@ func (c *NekoQSecurityConfig) FeedShamirKey(key string) bool {
 		log.Println("[ERROR] FeedShamirKey error.", err)
 		return false
 	}
+
+	err = initAllBuckets(c.container, c.container.db)
+	if err != nil {
+		log.Println("[ERROR] FeedShamirKey initAllBuckets error.", err)
+		return false
+	}
+	// decrypt success and init masterkey
+	c.container.MasterUnlock = true
+	c.container.MasterKey = m
+
 	return true
+}
+
+func initAllBuckets(container *NekoQSecurityContainer, db *bbolt.DB) error {
+	err := db.Update(func(tx *bbolt.Tx) error {
+		for _, v := range moduleNamespace {
+			b := tx.Bucket([]byte(v.Namespace))
+			if b == nil {
+				_, err := tx.CreateBucket([]byte(v.Namespace))
+				if err != nil {
+					return err
+				}
+			}
+			err := v.Module.SetupConfig(container)
+			if err != nil {
+				return err
+			}
+			err = v.Module.InitWebScaffold(webscaffold)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return err
 }
 
 func (c *NekoQSecurityConfig) ResetMasterKeyWhileUnlocking() {
